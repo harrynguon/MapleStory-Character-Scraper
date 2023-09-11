@@ -26,7 +26,7 @@ namespace Character.WebScraper.Shared
 
 
 			// Now IConfig can be referenced
-			serviceCollection.AddSingleton(configuration);
+			serviceCollection.AddSingleton<IConfiguration>(provider => configuration);
 			serviceCollection.AddSingleton<IAppSettings, AppSettings>();
 
 			serviceCollection.AddTransient<HtmlWeb>();
