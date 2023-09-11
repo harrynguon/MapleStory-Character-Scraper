@@ -16,6 +16,7 @@ namespace Character.WebScraper.Shared
 		public static void ConfigureServices()
 		{
 			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddLogging();
 
 			// Use configuration builder as you can pool in multiple sources
 			// e.g. environment variables, appsettings.json, AWS SSM parameters
@@ -23,16 +24,16 @@ namespace Character.WebScraper.Shared
 				.AddEnvironmentVariables()
 				.Build();
 
+
 			// Now IConfig can be referenced
 			serviceCollection.AddSingleton(configuration);
-
-
-			serviceCollection.AddTransient<HtmlWeb>();
 			serviceCollection.AddSingleton<IAppSettings, AppSettings>();
 
-			serviceCollection.AddAWSService<IAmazonS3>();
+			serviceCollection.AddTransient<HtmlWeb>();
 
-			serviceCollection.AddLogging();
+			serviceCollection.AddHttpClient<IHttpImageDownloadService, HttpImageDownloadService>();
+
+			serviceCollection.AddAWSService<IAmazonS3>();
 
 			Services = serviceCollection.BuildServiceProvider();
 		}
