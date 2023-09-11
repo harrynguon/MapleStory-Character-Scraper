@@ -1,6 +1,4 @@
 using Amazon.Lambda.Core;
-using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
-using Amazon.Runtime.Internal.Util;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Character.WebScraper.Shared;
@@ -17,7 +15,7 @@ namespace Character.WebScraper;
 
 public class FunctionInput
 {
-	public IEnumerable<string> MapleStoryUsernames { get; set; }
+	public IEnumerable<string>? MapleStoryUsernames { get; set; }
 }
 
 public class Function
@@ -39,7 +37,7 @@ public class Function
 		Startup.ConfigureServices();
 
 		_logger = logger ?? Startup.Services.GetRequiredService<ILogger<Function>>();
-		_appSettings = appSettings ?? Startup.Services.GetRequiredService<AppSettings>();
+		_appSettings = appSettings ?? Startup.Services.GetRequiredService<IAppSettings>();
 		_htmlWeb = htmlWeb ?? Startup.Services.GetRequiredService<HtmlWeb>();
 		_amazonS3 = amazonS3 ?? Startup.Services.GetRequiredService<IAmazonS3>();
 		_httpImageDownloadService = httpImageDownloadService ?? Startup.Services.GetRequiredService<IHttpImageDownloadService>();
@@ -55,13 +53,17 @@ public class Function
   {
 		_logger.LogInformation(JsonSerializer.Serialize(request));
 
-		if (request.MapleStoryUsernames?.Count() == 0)
+		if (request?.MapleStoryUsernames?.Count() == 0)
 		{
 			throw new ArgumentException("Please enter in a non-empty list of usernames.");
 		}
 
-		foreach(var username in request.MapleStoryUsernames)
+		var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("New Zealand Standard Time");
+		var nzDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+
+		foreach (var username in request.MapleStoryUsernames)
 		{
+			_logger.LogInformation($"Performing user lookup for username: {username}...");
 			var htmlDocument = _htmlWeb.Load($"https://{_appSettings.MapleStoryLookupUrl}/u/{username}");
 
 			// get all <img> tags, select all src="" values, filter only be image sources with the url in the value
@@ -76,12 +78,42 @@ public class Function
 			}
 
 			// download image
+			_logger.LogInformation($"Downloading image contents at URL: {imageUrl}...");
 			var bytes = await _httpImageDownloadService.DownloadImageAsync(imageUrl);
 
+			if (bytes?.Length == 0)
+			{
+				_logger.LogError($"Error downloading image contents.");
+				continue;
+			}
+
+			var path = $"pages/api/public/u/{username}";
+			var fileName = $"{nzDateTime:yyyy/MM/dd}.png";
+
+			var putObjectRequest = new PutObjectRequest
+			{
+				BucketName = _appSettings.S3BucketName,
+				CannedACL = S3CannedACL.Private,
+				Key = $"{path}/{fileName}"
+			};
+
+			using var memoryStream = new MemoryStream(bytes);
+
+			putObjectRequest.InputStream = memoryStream;
+			_logger.LogInformation($"Performing upload of image for putObjectRequest: {JsonSerializer.Serialize(putObjectRequest)}");
 			// upload to s3
-			
-		}
-		
+			var response = await _amazonS3.PutObjectAsync(putObjectRequest);
+
+			if (response.HttpStatusCode == System.Net.HttpStatusCode.OK)
+			{
+				_logger.LogInformation($"Successfully uploaded {fileName} to path {path} in S3 bucket {_appSettings.S3BucketName}.");
+			}
+			else
+			{
+				_logger.LogInformation($"Error uploading to S3. Http status code: {response.HttpStatusCode}.");
+			}
+	}
+
 		return true;
   }
 }
