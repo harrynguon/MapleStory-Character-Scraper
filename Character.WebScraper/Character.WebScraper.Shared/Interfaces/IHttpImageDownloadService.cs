@@ -8,6 +8,7 @@ namespace Character.WebScraper.Shared.Interfaces
 {
   public interface IHttpImageDownloadService
   {
-		Task<byte[]> DownloadImageAsync(string url);
+		Task<byte[]> DownloadImageAsBytesAsync(string url);
+		Task<Stream> DownloadImageAsStreamAsync(string url);
   }
 }

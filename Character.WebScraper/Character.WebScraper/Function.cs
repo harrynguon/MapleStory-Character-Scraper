@@ -79,7 +79,7 @@ public class Function
 
 			// download image
 			_logger.LogInformation($"Downloading image contents at URL: {imageUrl}...");
-			var bytes = await _httpImageDownloadService.DownloadImageAsync(imageUrl);
+			var bytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
 
 			if (bytes?.Length == 0)
 			{
@@ -90,16 +90,17 @@ public class Function
 			var path = $"pages/api/public/u/{username}";
 			var fileName = $"{nzDateTime:yyyy/MM/dd}.png";
 
+
+			using var memoryStream = new MemoryStream(bytes);
 			var putObjectRequest = new PutObjectRequest
 			{
 				BucketName = _appSettings.S3BucketName,
 				CannedACL = S3CannedACL.Private,
-				Key = $"{path}/{fileName}"
+				Key = $"{path}/{fileName}",
+				InputStream = memoryStream,
+				ContentType = "image/png"
 			};
 
-			using var memoryStream = new MemoryStream(bytes);
-
-			putObjectRequest.InputStream = memoryStream;
 			_logger.LogInformation($"Performing upload of image for putObjectRequest: {JsonSerializer.Serialize(putObjectRequest)}");
 			// upload to s3
 			var response = await _amazonS3.PutObjectAsync(putObjectRequest);
@@ -112,7 +113,7 @@ public class Function
 			{
 				_logger.LogInformation($"Error uploading to S3. Http status code: {response.HttpStatusCode}.");
 			}
-	}
+		}
 
 		return true;
   }

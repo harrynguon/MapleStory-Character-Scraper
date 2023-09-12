@@ -7,12 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Character.WebScraper", "Cha
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Character.WebScraper.Tests", "Character.WebScraper.Tests\Character.WebScraper.Tests.csproj", "{40B7C162-1081-4E13-A264-E4E5438DB10A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Character.WebScraper.Shared", "Character.WebScraper.Shared\Character.WebScraper.Shared.csproj", "{B22DE2A8-9039-4181-A939-DB7353047315}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FCD40B66-2EF0-4B38-B769-706DD18085BB}"
-	ProjectSection(SolutionItems) = preProject
-		..\Terraform\main.tf = ..\Terraform\main.tf
-	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Character.WebScraper.Shared", "Character.WebScraper.Shared\Character.WebScraper.Shared.csproj", "{B22DE2A8-9039-4181-A939-DB7353047315}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

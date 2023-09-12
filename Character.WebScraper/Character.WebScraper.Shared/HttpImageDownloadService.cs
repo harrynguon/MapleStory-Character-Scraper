@@ -20,15 +20,28 @@ namespace Character.WebScraper.Shared
 			_logger = logger;
 		}
 
-		public async Task<byte[]> DownloadImageAsync(string url)
+		public async Task<byte[]> DownloadImageAsBytesAsync(string url)
 		{
 			try
 			{
 				_logger.LogInformation($"Downloading byte data from url: {url}...");
-
 				return await _httpClient.GetByteArrayAsync(url);
 			}
 			 catch (Exception ex)
+			{
+				_logger.LogError(ex, ex.Message);
+				throw;
+			}
+		}
+
+		public async Task<Stream> DownloadImageAsStreamAsync(string url)
+		{
+			try
+			{
+				_logger.LogInformation($"Downloading byte data from url: {url}...");
+				return await _httpClient.GetStreamAsync(url);
+			}
+			catch (Exception ex)
 			{
 				_logger.LogError(ex, ex.Message);
 				throw;
