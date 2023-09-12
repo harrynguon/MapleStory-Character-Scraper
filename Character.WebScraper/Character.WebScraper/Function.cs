@@ -118,7 +118,7 @@ public class Function
 			}
 
 			// Wait a bit so the website doesn't get overloaded
-			await Task.Delay(1000);
+			Task.Delay(1000).Wait();
 		}
 
 		return true;
