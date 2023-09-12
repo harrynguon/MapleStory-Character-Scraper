@@ -34,18 +34,5 @@ namespace Character.WebScraper.Shared
 			}
 		}
 
-		public async Task<Stream> DownloadImageAsStreamAsync(string url)
-		{
-			try
-			{
-				_logger.LogInformation($"Downloading byte data from url: {url}...");
-				return await _httpClient.GetStreamAsync(url);
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, ex.Message);
-				throw;
-			}
-		}
 	}
 }

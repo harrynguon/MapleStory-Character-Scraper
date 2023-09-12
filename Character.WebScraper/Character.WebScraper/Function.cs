@@ -6,6 +6,7 @@ using Character.WebScraper.Shared.Interfaces;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Net;
 using System.Text.Json;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
@@ -51,7 +52,7 @@ public class Function
   /// <returns></returns>
   public async Task<bool> FunctionHandler(FunctionInput request, ILambdaContext context)
   {
-		_logger.LogInformation(JsonSerializer.Serialize(request));
+		_logger.LogInformation($"Request: {JsonSerializer.Serialize(request)}");
 
 		if (request?.MapleStoryUsernames?.Count() == 0)
 		{
@@ -63,7 +64,7 @@ public class Function
 
 		foreach (var username in request.MapleStoryUsernames)
 		{
-			_logger.LogInformation($"Performing user lookup for username: {username}...");
+			_logger.LogInformation($"Performing user lookup for username '{username}'...");
 			var htmlDocument = _htmlWeb.Load($"https://{_appSettings.MapleStoryLookupUrl}/u/{username}");
 
 			// get all <img> tags, select all src="" values, filter only be image sources with the url in the value
@@ -73,25 +74,26 @@ public class Function
 
 			if (string.IsNullOrEmpty(imageUrl))
 			{
-				_logger.LogInformation($"No image found for user: {username}.");
+				_logger.LogInformation($"No image found for user '{username}'.");
 				continue;
 			}
 
 			// download image
-			_logger.LogInformation($"Downloading image contents at URL: {imageUrl}...");
-			var bytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
+			_logger.LogInformation($"Downloading image content at URL: '{imageUrl}'...");
 
-			if (bytes?.Length == 0)
+			var content = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
+
+			if (content?.Length == 0)
 			{
-				_logger.LogError($"Error downloading image contents.");
+				_logger.LogInformation($"No image data was able to be downloaded at URL: '{imageUrl}'.");
 				continue;
 			}
 
 			var path = $"pages/api/public/u/{username}";
-			var fileName = $"{nzDateTime:yyyy/MM/dd}.png";
+			var fileName = $"{nzDateTime:yyyy-MM-dd}.png";
 
+			using var memoryStream = new MemoryStream(content);
 
-			using var memoryStream = new MemoryStream(bytes);
 			var putObjectRequest = new PutObjectRequest
 			{
 				BucketName = _appSettings.S3BucketName,
@@ -101,18 +103,22 @@ public class Function
 				ContentType = "image/png"
 			};
 
-			_logger.LogInformation($"Performing upload of image for putObjectRequest: {JsonSerializer.Serialize(putObjectRequest)}");
+			_logger.LogInformation($"Performing upload of image '{fileName}' to path: {path} in S3 bucket '{_appSettings.S3BucketName}'...");
+
 			// upload to s3
 			var response = await _amazonS3.PutObjectAsync(putObjectRequest);
 
-			if (response.HttpStatusCode == System.Net.HttpStatusCode.OK)
+			if (response.HttpStatusCode == HttpStatusCode.OK)
 			{
-				_logger.LogInformation($"Successfully uploaded {fileName} to path {path} in S3 bucket {_appSettings.S3BucketName}.");
+				_logger.LogInformation($"Successfully uploaded '{fileName}' to path '{path}' in S3 bucket '{_appSettings.S3BucketName}'.");
 			}
 			else
 			{
 				_logger.LogInformation($"Error uploading to S3. Http status code: {response.HttpStatusCode}.");
 			}
+
+			// Wait a bit so the website doesn't get overloaded
+			await Task.Delay(1000);
 		}
 
 		return true;

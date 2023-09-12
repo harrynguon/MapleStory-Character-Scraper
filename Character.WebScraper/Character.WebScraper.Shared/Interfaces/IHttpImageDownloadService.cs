@@ -9,6 +9,5 @@ namespace Character.WebScraper.Shared.Interfaces
   public interface IHttpImageDownloadService
   {
 		Task<byte[]> DownloadImageAsBytesAsync(string url);
-		Task<Stream> DownloadImageAsStreamAsync(string url);
   }
 }

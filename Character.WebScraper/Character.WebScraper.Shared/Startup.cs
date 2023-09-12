@@ -36,6 +36,9 @@ namespace Character.WebScraper.Shared
 			serviceCollection.AddAWSService<IAmazonS3>();
 
 			Services = serviceCollection.BuildServiceProvider();
+
+			ILoggerFactory loggerFactory = Services.GetService<ILoggerFactory>();
+			loggerFactory.AddLambdaLogger(configuration.GetLambdaLoggerOptions());
 		}
 
   }
