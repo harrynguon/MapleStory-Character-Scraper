@@ -16,6 +16,9 @@ namespace Character.WebScraper;
 
 public class FunctionInput
 {
+	/// <summary>
+	/// The list of MapleStory IGNs
+	/// </summary>
 	public IEnumerable<string>? MapleStoryUsernames { get; set; }
 }
 
@@ -50,7 +53,7 @@ public class Function
   /// <param name="input"></param>
   /// <param name="context"></param>
   /// <returns></returns>
-  public async Task<bool> FunctionHandler(FunctionInput request, ILambdaContext context)
+  public async Task<IList<FunctionOutput>> FunctionHandler(FunctionInput request, ILambdaContext context)
   {
 		_logger.LogInformation($"Request: {JsonSerializer.Serialize(request)}");
 
@@ -58,6 +61,8 @@ public class Function
 		{
 			throw new ArgumentException("Please enter in a non-empty list of usernames.");
 		}
+
+		var results = new List<FunctionOutput>();
 
 		var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("New Zealand Standard Time");
 		var nzDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
@@ -75,6 +80,7 @@ public class Function
 			if (string.IsNullOrEmpty(imageUrl))
 			{
 				_logger.LogInformation($"No image found for user '{username}'.");
+				results.Add(new FunctionOutput{ MapleStoryUsername = username, Success = false });
 				continue;
 			}
 
@@ -86,6 +92,7 @@ public class Function
 			if (imageDataBytes?.Length == 0)
 			{
 				_logger.LogInformation($"No image data was able to be downloaded at URL: '{imageUrl}'.");
+				results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
 				continue;
 			}
 
@@ -117,10 +124,27 @@ public class Function
 				_logger.LogInformation($"Error uploading to S3. Http status code: {response.HttpStatusCode}.");
 			}
 
+			results.Add(new FunctionOutput { MapleStoryUsername = username, Success = response.HttpStatusCode == HttpStatusCode.OK });
+
 			// Wait a bit so the website doesn't get overloaded
 			Task.Delay(1000).Wait();
 		}
 
-		return true;
+		_logger.LogInformation(JsonSerializer.Serialize(results));
+
+		return results;
   }
+}
+
+public class FunctionOutput
+{
+	/// <summary>
+	/// The IGN of the character
+	/// </summary>
+	public string MapleStoryUsername { get; set; }
+
+	/// <summary>
+	/// Whether the character image was uploaded to S3
+	/// </summary>
+	public bool Success { get; set; }
 }
