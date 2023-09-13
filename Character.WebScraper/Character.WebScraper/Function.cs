@@ -81,9 +81,9 @@ public class Function
 			// download image
 			_logger.LogInformation($"Downloading image content at URL: '{imageUrl}'...");
 
-			var content = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
+			var imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
 
-			if (content?.Length == 0)
+			if (imageDataBytes?.Length == 0)
 			{
 				_logger.LogInformation($"No image data was able to be downloaded at URL: '{imageUrl}'.");
 				continue;
@@ -92,7 +92,7 @@ public class Function
 			var path = $"pages/api/public/u/{username}";
 			var fileName = $"{nzDateTime:yyyy-MM-dd}.png";
 
-			using var memoryStream = new MemoryStream(content);
+			using var memoryStream = new MemoryStream(imageDataBytes);
 
 			var putObjectRequest = new PutObjectRequest
 			{
