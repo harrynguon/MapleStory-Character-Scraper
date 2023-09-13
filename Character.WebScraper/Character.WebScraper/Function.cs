@@ -46,14 +46,15 @@ public class Function
 		_amazonS3 = amazonS3 ?? Startup.Services.GetRequiredService<IAmazonS3>();
 		_httpImageDownloadService = httpImageDownloadService ?? Startup.Services.GetRequiredService<IHttpImageDownloadService>();
 	}
-    
-  /// <summary>
-  /// A simple function that takes a string and does a ToUpper
-  /// </summary>
-  /// <param name="input"></param>
-  /// <param name="context"></param>
-  /// <returns></returns>
-  public async Task<IList<FunctionOutput>> FunctionHandler(FunctionInput request, ILambdaContext context)
+
+	/// <summary>
+	/// Lookup character, Download their character image, Upload to S3
+	/// </summary>
+	/// <param name="request">List of MapleStoryUsernames</param>
+	/// <param name="context">Lambda context</param>
+	/// <returns>The list of usernames and whether their image was sucessfully uploaded to S3</returns>
+	/// <exception cref="ArgumentException"></exception>
+	public async Task<IList<FunctionOutput>> FunctionHandler(FunctionInput request, ILambdaContext context)
   {
 		_logger.LogInformation($"Request: {JsonSerializer.Serialize(request)}");
 
@@ -127,7 +128,7 @@ public class Function
 			results.Add(new FunctionOutput { MapleStoryUsername = username, Success = response.HttpStatusCode == HttpStatusCode.OK });
 
 			// Wait a bit so the website doesn't get overloaded
-			Task.Delay(1000).Wait();
+			Task.Delay(2000).Wait();
 		}
 
 		_logger.LogInformation(JsonSerializer.Serialize(results));
