@@ -12,6 +12,14 @@ variable "project_name" {
   default = "value"
 }
 
+variable "maplestory_lookup_url" {
+  type = string
+}
+
+variable "character_list" {
+  type = list(string)
+}
+
 variable "tags" {
 	type    = map(string)
 	default = {

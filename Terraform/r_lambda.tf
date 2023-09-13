@@ -66,7 +66,7 @@ resource "aws_iam_role_policy" "character_scraper_lambda_iam_role_policy" {
   })
 }
 
-
+# Create the lambda function
 resource "aws_lambda_function" "character_scraper_lambda" {
   function_name = "maplestory_character_scraper"
   role          = aws_iam_role.iam_for_character_scraper_lambda.arn
@@ -84,8 +84,17 @@ resource "aws_lambda_function" "character_scraper_lambda" {
 
   environment {
     variables = {
-      
+      MapleStoryLookupUrl = var.maplestory_lookup_url
       S3BucketName = aws_s3_bucket.maplestory_frontend.bucket
     }
   }
+}
+
+# Create the resource-based policy on the Lambda to allow EventBridge to invoke it
+ resource "aws_lambda_permission" "character_scraper_lambda_allow_cloudwatch" {
+  statement_id  = "allow_eventbridge_rule_execute_lambda"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.character_scraper_lambda.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.trigger_lambda_cloudwatch_event_rule.arn
 }
