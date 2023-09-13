@@ -48,11 +48,12 @@ public class Function
 	}
     
   /// <summary>
-  /// A simple function that takes a string and does a ToUpper
-  /// </summary>
-  /// <param name="input"></param>
-  /// <param name="context"></param>
-  /// <returns></returns>
+	/// Lookup character, Download their character image, Upload to S3
+	/// </summary>
+	/// <param name="request">List of MapleStoryUsernames</param>
+	/// <param name="context">Lambda context</param>
+	/// <returns>The list of usernames and whether their image was sucessfully uploaded to S3</returns>
+	/// <exception cref="ArgumentException"></exception>
   public async Task<IList<FunctionOutput>> FunctionHandler(FunctionInput request, ILambdaContext context)
   {
 		_logger.LogInformation($"Request: {JsonSerializer.Serialize(request)}");
@@ -69,19 +70,35 @@ public class Function
 
 		foreach (var username in request.MapleStoryUsernames)
 		{
-			_logger.LogInformation($"Performing user lookup for username '{username}'...");
-			var htmlDocument = _htmlWeb.Load($"https://{_appSettings.MapleStoryLookupUrl}/u/{username}");
 
-			// get all <img> tags, select all src="" values, filter only be image sources with the url in the value
-			var imageUrl = htmlDocument?.DocumentNode?.Descendants("img")
-				.Select(e => e.GetAttributeValue("src", null))
-				.FirstOrDefault(s => s?.Contains(_appSettings.MapleStoryLookupUrl, StringComparison.OrdinalIgnoreCase) ?? false);
+			var imageLookupAction = () =>
+			{
+				_logger.LogInformation($"Performing user lookup for username '{username}'...");
+				var htmlDocument = _htmlWeb.Load($"https://{_appSettings.MapleStoryLookupUrl}/u/{username}");
+
+				// get all <img> tags, select all src="" values, filter only be image sources with the url in the value
+				var imageUrl = htmlDocument?.DocumentNode?.Descendants("img")
+					.Select(e => e.GetAttributeValue("src", null))
+					.FirstOrDefault(s => s?.Contains(_appSettings.MapleStoryLookupUrl, StringComparison.OrdinalIgnoreCase) ?? false);
+
+				return imageUrl;
+			};
+
+			var imageUrl = imageLookupAction.Invoke();
 
 			if (string.IsNullOrEmpty(imageUrl))
 			{
-				_logger.LogInformation($"No image found for user '{username}'.");
-				results.Add(new FunctionOutput{ MapleStoryUsername = username, Success = false });
-				continue;
+				var retryAttempts = 2;
+				_logger.LogInformation($"No image found for user '{username}'. Retrying the lookup {retryAttempts} times for user '{username}'...");
+
+				imageUrl = await Retry<string>(imageLookupAction, retryAttempts);
+
+				if (string.IsNullOrEmpty(imageUrl))
+				{
+					_logger.LogInformation($"No image found for user '{username}' after retrying {retryAttempts} times.");
+					results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
+					continue;
+				}
 			}
 
 			// download image
@@ -127,13 +144,33 @@ public class Function
 			results.Add(new FunctionOutput { MapleStoryUsername = username, Success = response.HttpStatusCode == HttpStatusCode.OK });
 
 			// Wait a bit so the website doesn't get overloaded
-			Task.Delay(1000).Wait();
+			//Task.Delay(1000).Wait();
 		}
 
 		_logger.LogInformation(JsonSerializer.Serialize(results));
 
 		return results;
   }
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="action"></param>
+	/// <param name="retryCount"></param>
+	/// <returns></returns>
+	public async Task<T> Retry<T>(Func<T> action, int retryCount)
+	{
+		try
+		{
+			return action();
+		}
+		catch when (retryCount != 0)
+		{
+			await Task.Delay(2000);
+			return await Retry(action, --retryCount);
+		}
+	}
 }
 
 public class FunctionOutput
