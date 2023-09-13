@@ -3,13 +3,18 @@ variable "account_id" {
 }
 
 variable "region" {
-  type = string
+  type    = string
   default = "ap-southeast-2"
 }
 
 variable "project_name" {
-  type = string
+  type   = string
   default = "value"
+}
+
+variable "maplestory_lambda_scraper_function_name" {
+  type    = string
+  default = "maplestory_character_scraper"
 }
 
 variable "maplestory_lookup_url" {

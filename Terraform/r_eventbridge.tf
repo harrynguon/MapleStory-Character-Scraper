@@ -1,4 +1,4 @@
-# CloudWatch Event Rule to schedule a trigger for the lambda 
+# CloudBridge Event Rule to schedule a trigger for the lambda 
 resource "aws_cloudwatch_event_rule" "trigger_lambda_cloudwatch_event_rule" {
   name        = "scheduler_for_maplestory_scraper_lambda"
   description = "Schedule the MapleStory Scraper Lambda to automatically run once a day"
@@ -7,6 +7,7 @@ resource "aws_cloudwatch_event_rule" "trigger_lambda_cloudwatch_event_rule" {
   schedule_expression = "cron(0 6 ? * * *)"
 }
 
+# Target the MapleStory Character Scraper lambda
 resource "aws_cloudwatch_event_target" "trigger_lambda_cloudwatch_event_target" {
   target_id = "target_maplestory_character_lambda"
   rule      = aws_cloudwatch_event_rule.trigger_lambda_cloudwatch_event_rule.name
@@ -15,4 +16,3 @@ resource "aws_cloudwatch_event_target" "trigger_lambda_cloudwatch_event_target" 
   input     = jsonencode( {"MapleStoryUsernames" = var.character_list} )
 
 }
-
