@@ -4,8 +4,9 @@ locals {
 
 resource "aws_cloudfront_distribution" "maplestory_frontend_s3_distribution" {
   origin {
-    domain_name = aws_s3_bucket.maplestory_frontend.bucket_regional_domain_name
-    origin_id   = local.s3_origin_id
+    domain_name              = aws_s3_bucket.maplestory_frontend.bucket_regional_domain_name
+    origin_id                = local.s3_origin_id
+    origin_access_control_id = aws_cloudfront_origin_access_control.maplestory_frontend_s3_distribution_OAC.id
   }
 
   enabled             = true
@@ -46,4 +47,16 @@ resource "aws_cloudfront_distribution" "maplestory_frontend_s3_distribution" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+}
+
+# Origin Access Identities are now legacy as they don't work for all scenarios. Doesn't work for S3 buckets in all AWS regions, S3 server side encryption with AWS KMS, and dynamic requests (PUT, POST, DELETE) to S3.
+# https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html
+
+# Instead, create an Origin Access Control
+resource "aws_cloudfront_origin_access_control" "maplestory_frontend_s3_distribution_OAC" {
+  name                              = "maplestory_frontend_s3_distribution_OAC"
+  description                       = "maplestory_frontend_s3_distribution_OAC to access the S3 bucket"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }

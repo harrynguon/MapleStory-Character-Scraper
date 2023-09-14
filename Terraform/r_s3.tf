@@ -13,12 +13,15 @@ resource "aws_s3_bucket_public_access_block" "maplestory_frontend_s3_public_acce
   restrict_public_buckets = true
 }
 
-# Policy to allow access to the S3 bucket
+# S3 Bucket Policy to allow access to the S3 bucket
 # - CloudFront
 # - Lambda
 data "aws_iam_policy_document" "maplestory_frontend_allow_access_policy_document" {
+
+  # Lambda access
   statement {
     principals {
+      # Type 'AWS' = IAM principals
       type        = "AWS"
       identifiers = [aws_iam_role.iam_for_character_scraper_lambda.arn]
     }
@@ -33,6 +36,32 @@ data "aws_iam_policy_document" "maplestory_frontend_allow_access_policy_document
     resources = [ 
       "${aws_s3_bucket.maplestory_frontend.arn}/*"
       ]
+  }
+
+  # CloudFront OAC access
+  statement {
+    # Type 'Service' = AWS Service roles
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    actions = [
+      "s3:GetObject"
+    ]
+
+    resources = [ 
+      "${aws_s3_bucket.maplestory_frontend.arn}/*"
+    ]
+
+    condition {
+      # IAM condition operator
+      test = "StringEquals"
+      # Name of the context variable to apply the condition (StringEquals) to
+      variable = "Aws:SourceArn"
+      # Values to evaluate the condition against
+      values = [aws_cloudfront_distribution.maplestory_frontend_s3_distribution.arn] 
+    }
   }
 }
 
