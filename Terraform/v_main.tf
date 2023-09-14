@@ -7,11 +7,6 @@ variable "region" {
   default = "ap-southeast-2"
 }
 
-variable "project_name" {
-  type   = string
-  default = "value"
-}
-
 variable "maplestory_lambda_scraper_function_name" {
   type    = string
   default = "maplestory_character_scraper"
