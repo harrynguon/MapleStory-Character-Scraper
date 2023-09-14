@@ -97,7 +97,7 @@ public class Function
 				continue;
 			}
 
-			var path = $"pages/api/public/u/{username}";
+			var path = $"images/u/{username}";
 			var fileName = $"{nzDateTime:yyyy-MM-dd}.png";
 
 			using var memoryStream = new MemoryStream(imageDataBytes);
@@ -128,7 +128,7 @@ public class Function
 			results.Add(new FunctionOutput { MapleStoryUsername = username, Success = response.HttpStatusCode == HttpStatusCode.OK });
 
 			// Wait a bit so the website doesn't get overloaded
-			Task.Delay(2000).Wait();
+			Task.Delay(2250).Wait();
 		}
 
 		_logger.LogInformation(JsonSerializer.Serialize(results));
