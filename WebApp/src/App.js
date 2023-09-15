@@ -25,7 +25,8 @@ export default function App() {
 	const [selectedYear, setYear] = useState(0);
 	const [selectedMonth, setMonth] = useState(0);
 
-	const [imgsLoaded, setImgsLoaded] = useState(false);
+	const [imagesLoaded, setImagesLoaded] = useState(false);
+	const [loadedImageUrls, setLoadedImageUrls] = useState([]);
 
 	return (
 		<div className="App">
@@ -67,6 +68,17 @@ export default function App() {
 								onClick={() => {
 									setStep(4);
 									setMonth(month);
+									Promise.all(
+										getAllImagesForMonth(selectedUsername, selectedYear, month)
+									)
+										.then((imageUrls) => {
+											console.log("image urls from promise: " + imageUrls);
+											setImagesLoaded(true);
+											setLoadedImageUrls(
+												imageUrls.filter((imgUrl) => imgUrl != null)
+											);
+										})
+										.catch((err) => console.log("failed to load images", err));
 								}}
 							>
 								{month}
@@ -76,7 +88,8 @@ export default function App() {
 				)}
 
 				{currentStep == 4 &&
-					getAllImagesForMonth(selectedUsername, selectedYear, selectedMonth)}
+					imagesLoaded &&
+					loadedImageUrls.map((imgUrl) => <img src={imgUrl} />)}
 
 				<p>
 					Edit <code>src/App.js</code> and save to reload.
@@ -139,24 +152,12 @@ function getAllImagesForMonth(username, year, month) {
 }
 
 let loadImage = function (url) {
-	var image = new Image();
+	return new Promise((resolve, reject) => {
+		var image = new Image();
 
-	image.src = url;
+		image.onload = () => resolve(url);
+		image.onerror = (err) => resolve(null);
 
-	if (image?.width == 0) {
-		return false;
-	} else {
-		return <img src={url} />;
-	}
+		image.src = url;
+	});
 };
-
-// let loadImage = function (url) {
-// 	return new Promise((resolve, reject) => {
-// 		var image = new Image();
-
-// 		image.src = url;
-
-// 		image.onload = () => resolve(<img src={url} />);
-// 		image.onerror = (err) => reject(err);
-// 	});
-// };
