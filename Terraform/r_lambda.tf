@@ -86,6 +86,7 @@ resource "aws_lambda_function" "character_scraper_lambda" {
     variables = {
       MapleStoryLookupUrl = var.maplestory_lookup_url
       S3BucketName = aws_s3_bucket.maplestory_frontend.bucket
+      CharacterLookupDelay = 2250
     }
   }
 

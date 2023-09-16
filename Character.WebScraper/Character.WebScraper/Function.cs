@@ -1,3 +1,4 @@
+using Amazon.Extensions.NETCore.Setup;
 using Amazon.Lambda.Core;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -60,7 +61,13 @@ public class Function
 
 		if (request?.MapleStoryUsernames?.Count() == 0)
 		{
-			throw new ArgumentException("Please enter in a non-empty list of usernames.");
+			throw new ArgumentException($"Please enter in a non-empty list of {nameof(request.MapleStoryUsernames)}.");
+		}
+
+		var parseCharacterLookupDelay = int.TryParse(_appSettings.CharacterLookupDelay, out var characterLookupDelay);
+		if (!parseCharacterLookupDelay)
+		{
+			throw new ConfigurationException($"{nameof(_appSettings.CharacterLookupDelay)} is not a valid number.");
 		}
 
 		var results = new List<FunctionOutput>();
@@ -128,7 +135,7 @@ public class Function
 			results.Add(new FunctionOutput { MapleStoryUsername = username, Success = response.HttpStatusCode == HttpStatusCode.OK });
 
 			// Wait a bit so the website doesn't get overloaded
-			Task.Delay(2250).Wait();
+			Task.Delay(characterLookupDelay).Wait();
 		}
 
 		_logger.LogInformation(JsonSerializer.Serialize(results));

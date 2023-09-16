@@ -10,6 +10,7 @@ namespace Character.WebScraper.Shared.Interfaces
   {
 		public string MapleStoryLookupUrl { get; }
 		public string S3BucketName { get; }
+		public string CharacterLookupDelay { get; }
 
 	}
 }

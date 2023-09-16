@@ -21,5 +21,7 @@ namespace Character.WebScraper.Shared
 
 		public string S3BucketName => _configuration.GetValue<string>("S3BucketName") ?? string.Empty;
 
+		public string CharacterLookupDelay => _configuration.GetValue<string>("CharacterLookupDelay") ?? "2250";
+
 	}
 }
