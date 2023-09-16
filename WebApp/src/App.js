@@ -1,16 +1,13 @@
 import "./App.css";
 import { useState, useEffect } from "react";
 import { DateInfo } from "./DateInfo";
+import _jsonData from "./character_list.json";
 
-const users = [];
-
-const inceptionDateString = "2023-09-13";
-const inceptionDateNzString = new Date(inceptionDateString).toLocaleDateString(
-	"en-NZ",
-	{
-		timeZone: "Pacific/Auckland",
-	}
-);
+const inceptionDateNzString = new Date(
+	_jsonData.inception_date
+).toLocaleDateString("en-NZ", {
+	timeZone: "Pacific/Auckland",
+});
 const currentDateNzString = new Date().toLocaleDateString("en-NZ", {
 	timeZone: "Pacific/Auckland",
 });
@@ -33,14 +30,14 @@ export default function App() {
 			<header className="App-header">
 				{currentStep == 1 && (
 					<ul style={{ listStyleType: "none" }}>
-						{users.map((user) => (
+						{_jsonData.character_list.map((user) => (
 							<li
 								onClick={() => {
 									setStep(2);
-									setUsername(user);
+									setUsername(user.username);
 								}}
 							>
-								{user}
+								{user.username}
 							</li>
 						))}
 					</ul>

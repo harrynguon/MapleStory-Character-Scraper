@@ -220,3 +220,4 @@ global.json
 **/cdk.out/**
 **/.DS_Store
 /Character.WebScraper/Character.WebScraper/aws-lambda-tools-defaults.json
+WebApp/src/character_list.json
