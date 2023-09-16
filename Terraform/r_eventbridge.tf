@@ -4,7 +4,7 @@ resource "aws_cloudwatch_event_rule" "trigger_lambda_cloudwatch_event_rule" {
   description = "Schedule the MapleStory Scraper Lambda to automatically run once a day"
 
   // Every day at 6pm NZST
-  schedule_expression = "cron(0 6 ? * * *)"
+  schedule_expression = "cron(30 23 ? * * *)"
 }
 
 # Target the MapleStory Character Scraper lambda
