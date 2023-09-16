@@ -1,6 +1,6 @@
 import "./App.css";
 import { useState, useEffect } from "react";
-import { DateInfo } from "./DateInfo";
+import { DateInfo } from "../DateInfo";
 import _jsonData from "./character_list.json";
 
 const inceptionDateNzString = new Date(

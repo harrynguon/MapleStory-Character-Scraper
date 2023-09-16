@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import App from "./App";
+import CharacterDirectory from "./character_directory/CharacterDirectory";
 import reportWebVitals from "./reportWebVitals";
 import { createBrowserRouter, RouterProvider, Link } from "react-router-dom";
 
@@ -18,7 +18,7 @@ const router = createBrowserRouter([
 	},
 	{
 		path: "character_directory",
-		element: <App />,
+		element: <CharacterDirectory />,
 	},
 ]);
 
