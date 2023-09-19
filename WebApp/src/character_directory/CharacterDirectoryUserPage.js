@@ -30,12 +30,15 @@ export default function CharacterDirectoryUserPage() {
 	);
 }
 
+// Returns an object array of {year, month}
 function getAllMonthsPerYear() {
+	// Get all years from the current date to when the project was started
 	let allYearsSinceInception = Array.from(
 		{ length: currentDate.year + 1 - inceptionDate.year },
 		(_, n) => inceptionDate.year + n
 	);
 
+	// Get all the months in-between the project start date, up to the current date
 	let monthsForEachYear = allYearsSinceInception.map((year) => {
 		let startMonth = year === inceptionDate.year ? inceptionDate.month : 1;
 		let endMonth = year === inceptionDate.year ? 12 : currentDate.month;
