@@ -1,7 +1,6 @@
 import "./App.css";
 import { Link, useParams } from "react-router-dom";
 
-import _jsonData from "./character_list.json";
 import { inceptionDate, currentDate } from "./DateInfo";
 
 export default function CharacterDirectoryUserPage() {
@@ -14,8 +13,8 @@ export default function CharacterDirectoryUserPage() {
 					<b style={{ cursor: "default" }}>{username}</b>
 				</p>
 				<ul>
-					{getAllMonthsPerYear().map((monthsObj) => (
-						<li>
+					{getAllMonthsPerYear().map((monthsObj, index) => (
+						<li key={index}>
 							<Link to={`${monthsObj.year}/${monthsObj.month}`}>
 								{" "}
 								{new Date(
@@ -38,8 +37,8 @@ function getAllMonthsPerYear() {
 	);
 
 	let monthsForEachYear = allYearsSinceInception.map((year) => {
-		let startMonth = year == inceptionDate.year ? inceptionDate.month : 1;
-		let endMonth = year == inceptionDate.year ? 12 : currentDate.month;
+		let startMonth = year === inceptionDate.year ? inceptionDate.month : 1;
+		let endMonth = year === inceptionDate.year ? 12 : currentDate.month;
 
 		for (let month = startMonth; month < endMonth; month++) {
 			return { year: year, month: month };

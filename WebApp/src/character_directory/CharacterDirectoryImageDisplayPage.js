@@ -18,35 +18,48 @@ export default function CharacterDirectoryImageDisplayPage() {
 				setLoadedImageUrls(imageUrls.filter((imgUrl) => imgUrl != null));
 			})
 			.catch((err) => console.log("failed to load images", err));
-	}, []);
+	}, [username, year, month]);
 
 	return (
 		<div className="App">
 			<header className="App-header">
 				<table>
-					<tr>
-						<th>
-							<p>Image</p>
-						</th>
-						<th>
-							<p>Date</p>
-						</th>
-					</tr>
+					<thead>
+						<tr>
+							<th>
+								<p>Image</p>
+							</th>
+							<th>
+								<p>Date</p>
+							</th>
+						</tr>
+					</thead>
 					{imagesLoaded ? (
 						loadedImageUrls.map((imgUrlObject) => (
-							<tr>
-								<td>
-									<img src={imgUrlObject.url} />
-								</td>
-								<td>
-									<p style={{ fontSize: "70%" }}>
-										{imgUrlObject.year}-{imgUrlObject.month}-{imgUrlObject.day}
-									</p>
-								</td>
-							</tr>
+							<tbody>
+								<tr>
+									<td>
+										<img
+											src={imgUrlObject.url}
+											alt={`Thumbnail for ${imgUrlObject.username}`}
+										/>
+									</td>
+									<td>
+										<p style={{ fontSize: "70%" }}>
+											{imgUrlObject.year}-{imgUrlObject.month}-
+											{imgUrlObject.day}
+										</p>
+									</td>
+								</tr>
+							</tbody>
 						))
 					) : (
-						<div>Loading...</div>
+						<tbody>
+							<tr>
+								<td>Loading...</td>
+								<td>Loading...</td>
+							</tr>
+						</tbody>
 					)}
 				</table>
 			</header>
@@ -60,12 +73,12 @@ function getAllImagesForMonth(username, year, month) {
 	let endDayRange = new Date(year, month, 0).getDate();
 
 	// Start on the 13th day for September 2023 as that is when images started being populated
-	if (year == inceptionDate.year && month == inceptionDate.month) {
+	if (year === inceptionDate.year && month === inceptionDate.month) {
 		startDayRange = inceptionDate.day;
 	}
 
 	// If searching in the current month, limit it to only up to the current day, and nothing beyond
-	if (year == currentDate.year && month == currentDate.month) {
+	if (year === currentDate.year && month === currentDate.month) {
 		endDayRange = currentDate.day;
 	}
 

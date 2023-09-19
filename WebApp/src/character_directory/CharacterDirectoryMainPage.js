@@ -8,8 +8,8 @@ export default function App() {
 		<div className="App">
 			<header className="App-header">
 				<ul>
-					{_jsonData.character_list.map((user) => (
-						<li>
+					{_jsonData.character_list.map((user, index) => (
+						<li key={index}>
 							<Link to={`u/${user.username}`}>{user.username}</Link>
 						</li>
 					))}
