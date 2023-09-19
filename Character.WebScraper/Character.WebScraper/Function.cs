@@ -132,7 +132,12 @@ public class Function
 				_logger.LogInformation($"Error uploading to S3. Http status code: {response.HttpStatusCode}.");
 			}
 
-			results.Add(new FunctionOutput { MapleStoryUsername = username, Success = response.HttpStatusCode == HttpStatusCode.OK });
+			results.Add(new FunctionOutput {
+					MapleStoryUsername = username,
+					S3BucketObjectKey = putObjectRequest.Key,
+					Success = response.HttpStatusCode == HttpStatusCode.OK
+				}
+			);
 
 			// Wait a bit so the website doesn't get overloaded
 			Task.Delay(characterLookupDelay).Wait();
@@ -150,6 +155,11 @@ public class FunctionOutput
 	/// The IGN of the character
 	/// </summary>
 	public string MapleStoryUsername { get; set; }
+
+	/// <summary>
+	/// The S3 bucket object key i.e. the full path
+	/// </summary>
+	public string S3BucketObjectKey { get; set; }
 
 	/// <summary>
 	/// Whether the character image was uploaded to S3
