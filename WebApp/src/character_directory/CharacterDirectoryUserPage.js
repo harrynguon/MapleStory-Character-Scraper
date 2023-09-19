@@ -1,7 +1,7 @@
 import "./App.css";
 import { Link, useParams } from "react-router-dom";
 
-import { inceptionDate, currentDate } from "./DateInfo";
+import { getDateInfo, currentDate } from "./DateInfo";
 
 export default function CharacterDirectoryUserPage() {
 	let { username } = useParams();
@@ -13,17 +13,17 @@ export default function CharacterDirectoryUserPage() {
 					<b style={{ cursor: "default" }}>{username}</b>
 				</p>
 				<ul>
-					{getAllMonthsPerYear().map((monthsObj, index) => (
-						<li style={{ listStyle: "outside" }} key={index}>
+					{getAllMonthsPerYear(username).map((monthsObj, index) => (
+						<li style={{ listStyle: "outside", textAlign: "left" }} key={index}>
 							<Link to={`${monthsObj.year}/${monthsObj.month}`}>
 								{" "}
 								{new Date(
-									currentDate.year,
-									currentDate.month - 1,
-									currentDate.day,
-									0,
-									0,
-									0
+									monthsObj.year,
+									monthsObj.month,
+									0, // days
+									0, // hours
+									0, // minutes
+									0 // seconds
 								).toLocaleString("default", { month: "long" })}{" "}
 								{monthsObj.year}
 							</Link>
@@ -36,20 +36,24 @@ export default function CharacterDirectoryUserPage() {
 }
 
 // Returns an object array of {year, month}
-function getAllMonthsPerYear() {
+function getAllMonthsPerYear(username) {
+	// Inception date of the character
+	let inceptionDate = getDateInfo(username);
 	// Get all years from the current date to when the project was started
 	let allYearsSinceInception = Array.from(
 		{ length: currentDate.year + 1 - inceptionDate.year },
 		(_, n) => inceptionDate.year + n
 	);
 
-	// Get all the months in-between the project start date, up to the current date
-	let monthsForEachYear = allYearsSinceInception.map((year) => {
-		let startMonth = year === inceptionDate.year ? inceptionDate.month : 1;
-		let endMonth = year === inceptionDate.year ? 12 : currentDate.month;
+	let monthsForEachYear = [];
 
-		for (let month = startMonth; month < endMonth; month++) {
-			return { year: year, month: month };
+	// Get all the months in-between the character start date, up to the current date
+	allYearsSinceInception.forEach((year) => {
+		let startMonth = year === inceptionDate.year ? inceptionDate.month : 1;
+		let endMonth = currentDate.month;
+
+		for (let month = startMonth; month <= endMonth; month++) {
+			monthsForEachYear.push({ year: year, month: month });
 		}
 	});
 
