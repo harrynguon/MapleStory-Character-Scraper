@@ -10,14 +10,20 @@ export class DateInfo {
 	}
 }
 
-const inceptionDateNzString = new Date(
-	_jsonData.inception_date
-).toLocaleDateString("en-NZ", {
-	timeZone: "Pacific/Auckland",
-});
 const currentDateNzString = new Date().toLocaleDateString("en-NZ", {
 	timeZone: "Pacific/Auckland",
 });
 
-export const inceptionDate = new DateInfo(inceptionDateNzString);
 export const currentDate = new DateInfo(currentDateNzString);
+
+export function getDateInfo(username) {
+	let characterObject = _jsonData.character_list.find(
+		(character) => character.username === username
+	);
+
+	return new DateInfo(
+		new Date(characterObject.startDate).toLocaleDateString("en-NZ", {
+			timeZone: "Pacific/Auckland",
+		})
+	);
+}

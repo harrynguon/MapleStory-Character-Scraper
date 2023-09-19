@@ -2,7 +2,7 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-import { inceptionDate, currentDate } from "./DateInfo";
+import { getDateInfo, currentDate } from "./DateInfo";
 
 export default function CharacterDirectoryImageDisplayPage() {
 	const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -68,14 +68,17 @@ export default function CharacterDirectoryImageDisplayPage() {
 }
 
 function getAllImagesForMonth(username, year, month) {
+	let inceptionDate = getDateInfo(username);
+
 	let yearAsNumber = Number(year);
 	let monthAsNumber = Number(month);
 
 	let startDayRange = 1;
-	// Get number of days in the month via Javascript date functionality
+	// Get total number of days in the month via Javascript date functionality
 	let endDayRange = new Date(yearAsNumber, monthAsNumber, 0).getDate();
 
-	// Start on the 13th day for September 2023 as that is when images started being populated
+	// If the lookup month/year is the same month/year as when the character started having its
+	// images populated, then only start the lookup range on the character's first day
 	if (
 		yearAsNumber === inceptionDate.year &&
 		monthAsNumber === inceptionDate.month
@@ -83,7 +86,8 @@ function getAllImagesForMonth(username, year, month) {
 		startDayRange = inceptionDate.day;
 	}
 
-	// If searching in the current month, limit it to only up to the current day, and nothing beyond
+	// If searching in the current month, limit the lookup to only up to the current day
+	// as the end range and nothing beyond
 	if (
 		yearAsNumber === currentDate.year &&
 		monthAsNumber === currentDate.month
