@@ -1,7 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import CharacterDirectory from "./character_directory/CharacterDirectory";
+import CharacterDirectoryMainPage from "./character_directory/CharacterDirectoryMainPage";
+import CharacterDirectoryUserPage from "./character_directory/CharacterDirectoryUserPage";
+import CharacterDirectoryImageDisplayPage from "./character_directory/CharacterDirectoryImageDisplayPage";
 import reportWebVitals from "./reportWebVitals";
 import { createBrowserRouter, RouterProvider, Link } from "react-router-dom";
 
@@ -9,16 +11,30 @@ const router = createBrowserRouter([
 	{
 		path: "/",
 		element: (
-			<ul>
-				<li>
-					<Link to={`character_directory`}>MapleStory Character Directory</Link>
-				</li>
-			</ul>
+			<div className="App">
+				<header className="App-header">
+					<ul style={{ listStyle: "outside" }}>
+						<li>
+							<Link to={`character_directory`}>
+								MapleStory Character Directory
+							</Link>
+						</li>
+					</ul>
+				</header>
+			</div>
 		),
 	},
 	{
 		path: "character_directory",
-		element: <CharacterDirectory />,
+		element: <CharacterDirectoryMainPage />,
+	},
+	{
+		path: "character_directory/u/:username",
+		element: <CharacterDirectoryUserPage />,
+	},
+	{
+		path: "character_directory/u/:username/:year/:month",
+		element: <CharacterDirectoryImageDisplayPage />,
 	},
 ]);
 
