@@ -68,17 +68,26 @@ export default function CharacterDirectoryImageDisplayPage() {
 }
 
 function getAllImagesForMonth(username, year, month) {
+	let yearAsNumber = Number(year);
+	let monthAsNumber = Number(month);
+
 	let startDayRange = 1;
 	// Get number of days in the month via Javascript date functionality
-	let endDayRange = new Date(year, month, 0).getDate();
+	let endDayRange = new Date(yearAsNumber, monthAsNumber, 0).getDate();
 
 	// Start on the 13th day for September 2023 as that is when images started being populated
-	if (year === inceptionDate.year && month === inceptionDate.month) {
+	if (
+		yearAsNumber === inceptionDate.year &&
+		monthAsNumber === inceptionDate.month
+	) {
 		startDayRange = inceptionDate.day;
 	}
 
 	// If searching in the current month, limit it to only up to the current day, and nothing beyond
-	if (year === currentDate.year && month === currentDate.month) {
+	if (
+		yearAsNumber === currentDate.year &&
+		monthAsNumber === currentDate.month
+	) {
 		endDayRange = currentDate.day;
 	}
 
