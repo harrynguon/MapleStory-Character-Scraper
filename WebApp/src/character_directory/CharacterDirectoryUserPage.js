@@ -14,11 +14,16 @@ export default function CharacterDirectoryUserPage() {
 				</p>
 				<ul>
 					{getAllMonthsPerYear().map((monthsObj, index) => (
-						<li key={index}>
+						<li style={{ listStyle: "outside" }} key={index}>
 							<Link to={`${monthsObj.year}/${monthsObj.month}`}>
 								{" "}
 								{new Date(
-									`${currentDate.year}-${currentDate.month}-${currentDate.day}`
+									currentDate.year,
+									currentDate.month - 1,
+									currentDate.day,
+									0,
+									0,
+									0
 								).toLocaleString("default", { month: "long" })}{" "}
 								{monthsObj.year}
 							</Link>
