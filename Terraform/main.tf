@@ -25,3 +25,9 @@ provider "aws" {
 		tags = var.tags
 	}
 }
+
+// Initialise for pulling ACM certificate located in us-east-1
+provider "aws" {
+	alias  = "us-east-1"
+	region = "us-east-1"
+}

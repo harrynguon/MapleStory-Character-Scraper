@@ -1,0 +1,11 @@
+File locations on local machine vs. S3 bucket
+
+Images
+- Local: /public/images/u/{username}
+- S3 Bucket: /images/u/{username}
+Referenced by `<img src=/images/u/${username}/${year}-${month}-${day}.png` />;
+
+Character_list.json
+- Local: /src/character_directory/character_list.json
+- S3 Bucket: /character_list.json
+Referenced by 'import _jsonData from "./character_list.json";'

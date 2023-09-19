@@ -1,3 +1,9 @@
+data "aws_acm_certificate" "maplestory_domain_name_certificate" {
+	provider = aws.us-east-1
+	domain   = var.maplestory_character_scraper_domain_name
+	statuses = ["ISSUED"]
+}
+
 locals {
   s3_origin_id = "${aws_s3_bucket.maplestory_frontend.id}-S3-Origin"
 }
@@ -14,25 +20,15 @@ resource "aws_cloudfront_distribution" "maplestory_frontend_s3_distribution" {
   comment             = "CloudFront distribution to serve ${aws_s3_bucket.maplestory_frontend.id} s3 bucket"
   default_root_object = "index.html"
 
-  # aliases = ["tester.fairfrozen.com"]
+  aliases = [var.maplestory_character_scraper_domain_name, "www.${var.maplestory_character_scraper_domain_name}"]
 
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = local.s3_origin_id
-
-    forwarded_values {
-      query_string = false
-
-      cookies {
-        forward = "none"
-      }
-    }
-
+    # Using the Caching Optimised managed policy ID
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = local.s3_origin_id
     viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 43200 # Cache TTL 12 hours
   }
 
   price_class = "PriceClass_All"
@@ -45,7 +41,9 @@ resource "aws_cloudfront_distribution" "maplestory_frontend_s3_distribution" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = data.aws_acm_certificate.maplestory_domain_name_certificate.arn
+    minimum_protocol_version = "TLSv1.2_2021"
+    ssl_support_method       = "sni-only"
   }
 }
 
