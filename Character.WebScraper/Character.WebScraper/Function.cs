@@ -94,8 +94,34 @@ public class Function
 
 			// download image
 			_logger.LogInformation($"Downloading image content at URL: '{imageUrl}'...");
-
-			var imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
+			var imageDataBytes = new byte[] { };
+			try
+			{
+				imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
+			}
+			catch (HttpRequestException ex)
+			{
+				_logger.LogError(ex, $"Failed to download image data for user {username}.");
+				if (ex.StatusCode == HttpStatusCode.NotFound)
+				{
+					// e.g. 'SDJKNSKDN.png'
+					var characterImageId = new Uri(imageUrl).Segments.Last();
+					var fallbackImageUrl = $"https://msavatar1.nexon.net/Character/{characterImageId}";
+					_logger.LogInformation($"Retrying with the fallback source MapleStory URL: {fallbackImageUrl} ...");
+					imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(fallbackImageUrl);
+				}
+				else
+				{
+					results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
+					continue;
+				}
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, $"Failed to download image data for user {username}.");
+				results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
+				continue;
+			}
 
 			if (imageDataBytes?.Length == 0)
 			{
