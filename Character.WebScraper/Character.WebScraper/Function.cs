@@ -94,8 +94,18 @@ public class Function
 
 			// download image
 			_logger.LogInformation($"Downloading image content at URL: '{imageUrl}'...");
+			var imageDataBytes = new byte[] { };
+			try
+			{
+				imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
+			}
 
-			var imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, $"Failed to download image data for user {username}.");
+				results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
+				continue;
+			}
 
 			if (imageDataBytes?.Length == 0)
 			{
