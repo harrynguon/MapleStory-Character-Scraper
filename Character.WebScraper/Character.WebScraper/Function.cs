@@ -93,22 +93,24 @@ public class Function
 			}
 
 			// download image
-			_logger.LogInformation($"Downloading image content at URL: '{imageUrl}'...");
+			
 			var imageDataBytes = new byte[] { };
 			try
 			{
-				imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
+				// e.g. ID - 'SDJKNSKDN.png'
+				var characterImageId = new Uri(imageUrl).Segments.Last();
+				var msImageUrl = $"https://msavatar1.nexon.net/Character/{characterImageId}";
+				_logger.LogInformation($"Downloading image content at MapleStory URL: {msImageUrl} ...");
+				imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(msImageUrl);
 			}
 			catch (HttpRequestException ex)
 			{
 				_logger.LogError(ex, $"Failed to download image data for user {username}.");
-				if (ex.StatusCode == HttpStatusCode.NotFound)
+				
+				if (ex.StatusCode != HttpStatusCode.OK)
 				{
-					// e.g. 'SDJKNSKDN.png'
-					var characterImageId = new Uri(imageUrl).Segments.Last();
-					var fallbackImageUrl = $"https://msavatar1.nexon.net/Character/{characterImageId}";
-					_logger.LogInformation($"Retrying with the fallback source MapleStory URL: {fallbackImageUrl} ...");
-					imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(fallbackImageUrl);
+					_logger.LogInformation($"Downloading image content at fallback URL: '{imageUrl}'...");
+					imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
 				}
 				else
 				{
