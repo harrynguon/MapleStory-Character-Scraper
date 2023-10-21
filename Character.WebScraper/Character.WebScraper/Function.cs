@@ -77,103 +77,121 @@ public class Function
 
 		foreach (var username in request.MapleStoryUsernames)
 		{
-			_logger.LogInformation($"Performing user lookup for username '{username}'...");
-			var htmlDocument = _htmlWeb.Load($"https://{_appSettings.MapleStoryLookupUrl}/u/{username}");
+			var lookupUrl = $"https://maplestory.net/digits/{username}";
+			_logger.LogInformation($"Performing user lookup for username '{username}' with lookup URL {lookupUrl}...");
 
-			// get all <img> tags, select all src="" values, filter only be image sources with the url in the value
-			var imageUrl = htmlDocument?.DocumentNode?.Descendants("img")
-				.Select(e => e.GetAttributeValue("src", null))
-				.FirstOrDefault(s => s?.Contains(_appSettings.MapleStoryLookupUrl, StringComparison.OrdinalIgnoreCase) ?? false);
+			string? imageUrl = GetImageUrl(lookupUrl, "msavatar1.nexon.net");
 
-			if (string.IsNullOrEmpty(imageUrl))
-			{
-				_logger.LogInformation($"No image found for user '{username}'.");
-				results.Add(new FunctionOutput{ MapleStoryUsername = username, Success = false });
-				continue;
+		if (string.IsNullOrEmpty(imageUrl))
+	  {
+			var fallbackLookupUrl = $"https://{_appSettings.MapleStoryLookupUrl}/u/{username}";
+			_logger.LogInformation($"No image found for user '{username}'. Retrying with fallback URL {fallbackLookupUrl}...");
+
+			imageUrl = GetImageUrl(fallbackLookupUrl, _appSettings.MapleStoryLookupUrl);
 			}
 
-			// download image
-			
-			var imageDataBytes = new byte[] { };
-
-			// e.g. ID - 'SDJKNSKDN.png'
-			var characterImageId = new Uri(imageUrl).Segments.Last();
-			var characterImageSourceUrl = $"https://msavatar1.nexon.net/Character/{characterImageId}";
-			try
-			{
-				_logger.LogInformation($"Downloading image content at MapleStory URL: {characterImageSourceUrl} ...");
-				imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(characterImageSourceUrl);
-			}
-			catch (HttpRequestException ex)
-			{
-				_logger.LogError(ex, $"Failed to download image data for user {username}.");
-				
-				if (ex.StatusCode != HttpStatusCode.OK)
-				{
-					_logger.LogInformation($"Downloading image content at fallback URL: '{imageUrl}'...");
-					characterImageSourceUrl = imageUrl;
-					imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, $"Failed to download image data for user {username}.");
-				results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
-				continue;
-			}
-
-			if (imageDataBytes?.Length == 0)
-			{
-				_logger.LogInformation($"No image data was able to be downloaded at URL: '{imageUrl}'.");
-				results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
-				continue;
-			}
-
-			var path = $"images/u/{username}";
-			var fileName = $"{nzDateTime:yyyy-MM-dd}.png";
-
-			using var memoryStream = new MemoryStream(imageDataBytes);
-
-			var putObjectRequest = new PutObjectRequest
-			{
-				BucketName = _appSettings.S3BucketName,
-				CannedACL = S3CannedACL.Private,
-				Key = $"{path}/{fileName}",
-				InputStream = memoryStream,
-				ContentType = "image/png"
-			};
-
-			_logger.LogInformation($"Performing upload of image '{fileName}' to path: {path} in S3 bucket '{_appSettings.S3BucketName}'...");
-
-			// upload to s3
-			var response = await _amazonS3.PutObjectAsync(putObjectRequest);
-
-			if (response.HttpStatusCode == HttpStatusCode.OK)
-			{
-				_logger.LogInformation($"Successfully uploaded '{fileName}' to path '{path}' in S3 bucket '{_appSettings.S3BucketName}'.");
-			}
-			else
-			{
-				_logger.LogInformation($"Error uploading to S3. Http status code: {response.HttpStatusCode}.");
-			}
-
-			results.Add(new FunctionOutput {
-					MapleStoryUsername = username,
-					MapleStoryCharacterImageId = characterImageId,
-					MapleStoryCharacterImageSourceUrl = characterImageSourceUrl,
-					S3BucketObjectKey = putObjectRequest.Key,
-					Success = response.HttpStatusCode == HttpStatusCode.OK
-				}
-			);
-
-			// Wait a bit so the website doesn't get overloaded
-			Task.Delay(characterLookupDelay).Wait();
+		if (string.IsNullOrEmpty(imageUrl))
+		{
+			_logger.LogInformation($"No image found for user '{username}'.");
+			results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
+			continue;
 		}
 
-		_logger.LogInformation(JsonSerializer.Serialize(results));
+		// download image
+
+		var imageDataBytes = new byte[] { };
+
+	  // e.g. ID - 'SDJKNSKDN.png'
+	  var characterImageId = new Uri(imageUrl).Segments.Last();
+	  var characterImageSourceUrl = $"https://msavatar1.nexon.net/Character/{characterImageId}";
+	  try
+	  {
+		_logger.LogInformation($"Downloading image content at MapleStory URL: {characterImageSourceUrl} ...");
+		imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(characterImageSourceUrl);
+	  }
+	  catch (HttpRequestException ex)
+	  {
+		_logger.LogError(ex, $"Failed to download image data for user {username}.");
+
+		if (ex.StatusCode != HttpStatusCode.OK)
+		{
+		  _logger.LogInformation($"Downloading image content at fallback URL: '{imageUrl}'...");
+		  characterImageSourceUrl = imageUrl;
+		  imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
+		}
+	  }
+	  catch (Exception ex)
+	  {
+		_logger.LogError(ex, $"Failed to download image data for user {username}.");
+		results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
+		continue;
+	  }
+
+	  if (imageDataBytes?.Length == 0)
+	  {
+		_logger.LogInformation($"No image data was able to be downloaded at URL: '{imageUrl}'.");
+		results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
+		continue;
+	  }
+
+	  var path = $"images/u/{username}";
+	  var fileName = $"{nzDateTime:yyyy-MM-dd}.png";
+
+	  using var memoryStream = new MemoryStream(imageDataBytes);
+
+	  var putObjectRequest = new PutObjectRequest
+	  {
+		BucketName = _appSettings.S3BucketName,
+		CannedACL = S3CannedACL.Private,
+		Key = $"{path}/{fileName}",
+		InputStream = memoryStream,
+		ContentType = "image/png"
+	  };
+
+	  _logger.LogInformation($"Performing upload of image '{fileName}' to path: {path} in S3 bucket '{_appSettings.S3BucketName}'...");
+
+	  // upload to s3
+	  var response = await _amazonS3.PutObjectAsync(putObjectRequest);
+
+	  if (response.HttpStatusCode == HttpStatusCode.OK)
+	  {
+		_logger.LogInformation($"Successfully uploaded '{fileName}' to path '{path}' in S3 bucket '{_appSettings.S3BucketName}'.");
+	  }
+	  else
+	  {
+		_logger.LogInformation($"Error uploading to S3. Http status code: {response.HttpStatusCode}.");
+	  }
+
+	  results.Add(new FunctionOutput
+	  {
+		MapleStoryUsername = username,
+		MapleStoryCharacterImageId = characterImageId,
+		MapleStoryCharacterImageSourceUrl = characterImageSourceUrl,
+		S3BucketObjectKey = putObjectRequest.Key,
+		Success = response.HttpStatusCode == HttpStatusCode.OK
+	  }
+	  );
+
+	  // Wait a bit so the website doesn't get overloaded
+	  Task.Delay(characterLookupDelay).Wait();
+	}
+
+	_logger.LogInformation(JsonSerializer.Serialize(results));
 
 		return results;
   }
+
+  private string GetImageUrl(string lookupUrl, string imageSourceUrl)
+  {
+	var htmlDocument = _htmlWeb.Load(lookupUrl);
+
+	// get all <img> tags, select all src="" values, filter only be image sources with the url in the value
+	var imageUrl = htmlDocument?.DocumentNode?.Descendants("img")
+		.Select(e => e.GetAttributeValue("src", null))
+		.FirstOrDefault(s => s?.Contains(imageSourceUrl, StringComparison.OrdinalIgnoreCase) ?? false);
+	return imageUrl;
+  }
+
 }
 
 public class FunctionOutput
