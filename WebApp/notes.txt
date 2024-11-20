@@ -11,5 +11,5 @@ Character_list.json
 Referenced by 'import _jsonData from "./character_list.json";'
 
 Deploying
-- `npm run build`
+- `npm run build` in the WebApp folder
 - Drag contents of `/build` to the s3 bucket root
