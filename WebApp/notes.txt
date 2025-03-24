@@ -9,3 +9,7 @@ Character_list.json
 - Local: /src/character_directory/character_list.json
 - S3 Bucket: /character_list.json
 Referenced by 'import _jsonData from "./character_list.json";'
+
+Deploying
+- `npm run build` in the WebApp folder
+- Drag contents of `/build` to the s3 bucket root

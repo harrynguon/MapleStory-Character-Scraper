@@ -93,27 +93,26 @@ public class Function
 			}
 
 			// download image
-			_logger.LogInformation($"Downloading image content at URL: '{imageUrl}'...");
+			
 			var imageDataBytes = new byte[] { };
+
+			// e.g. ID - 'SDJKNSKDN.png'
+			var characterImageId = new Uri(imageUrl).Segments.Last();
+			var characterImageSourceUrl = $"https://msavatar1.nexon.net/Character/{characterImageId}";
 			try
 			{
-				imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
+				_logger.LogInformation($"Downloading image content at MapleStory URL: {characterImageSourceUrl} ...");
+				imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(characterImageSourceUrl);
 			}
 			catch (HttpRequestException ex)
 			{
 				_logger.LogError(ex, $"Failed to download image data for user {username}.");
-				if (ex.StatusCode == HttpStatusCode.NotFound)
+				
+				if (ex.StatusCode != HttpStatusCode.OK)
 				{
-					// e.g. 'SDJKNSKDN.png'
-					var characterImageId = new Uri(imageUrl).Segments.Last();
-					var fallbackImageUrl = $"https://msavatar1.nexon.net/Character/{characterImageId}";
-					_logger.LogInformation($"Retrying with the fallback source MapleStory URL: {fallbackImageUrl} ...");
-					imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(fallbackImageUrl);
-				}
-				else
-				{
-					results.Add(new FunctionOutput { MapleStoryUsername = username, Success = false });
-					continue;
+					_logger.LogInformation($"Downloading image content at fallback URL: '{imageUrl}'...");
+					characterImageSourceUrl = imageUrl;
+					imageDataBytes = await _httpImageDownloadService.DownloadImageAsBytesAsync(imageUrl);
 				}
 			}
 			catch (Exception ex)
@@ -160,6 +159,8 @@ public class Function
 
 			results.Add(new FunctionOutput {
 					MapleStoryUsername = username,
+					MapleStoryCharacterImageId = characterImageId,
+					MapleStoryCharacterImageSourceUrl = characterImageSourceUrl,
 					S3BucketObjectKey = putObjectRequest.Key,
 					Success = response.HttpStatusCode == HttpStatusCode.OK
 				}
@@ -181,6 +182,17 @@ public class FunctionOutput
 	/// The IGN of the character
 	/// </summary>
 	public string MapleStoryUsername { get; set; }
+
+	/// <summary>
+	/// The Image ID of the character.
+	/// I believe each character only has one character image ID, which is the source of the latest image.
+	/// </summary>
+	public string MapleStoryCharacterImageId { get; set; }
+
+	/// <summary>
+	/// The source URL at where the image was retrieved from
+	/// </summary>
+	public string MapleStoryCharacterImageSourceUrl { get; set; }
 
 	/// <summary>
 	/// The S3 bucket object key i.e. the full path
