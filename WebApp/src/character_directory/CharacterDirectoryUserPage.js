@@ -3,6 +3,11 @@ import { Link, useParams } from "react-router-dom";
 
 import { getDateInfo, currentDate } from "./DateInfo";
 
+const endDate = {
+	year: 2025,
+	month: 5,
+};
+
 export default function CharacterDirectoryUserPage() {
 	let { username } = useParams();
 
@@ -41,7 +46,7 @@ function getAllMonthsPerYear(username) {
 	let inceptionDate = getDateInfo(username);
 	// Get all years from the current date to when the project was started
 	let allYearsSinceInception = Array.from(
-		{ length: currentDate.year + 1 - inceptionDate.year },
+		{ length: endDate.year + 1 - inceptionDate.year },
 		(_, n) => inceptionDate.year + n
 	);
 
@@ -50,7 +55,7 @@ function getAllMonthsPerYear(username) {
 	// Get all the months in-between the character start date, up to the current date
 	allYearsSinceInception.forEach((year) => {
 		let startMonth = year === inceptionDate.year ? inceptionDate.month : 1;
-		let endMonth = currentDate.month;
+		let endMonth = year === endDate.year ? endDate.month : currentDate.month;
 
 		for (let month = startMonth; month <= endMonth; month++) {
 			monthsForEachYear.push({ year: year, month: month });
